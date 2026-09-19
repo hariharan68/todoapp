@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth-context";
 import { ChatIcon, ListIcon, LogOutIcon, SparklesIcon, StarIcon } from "../icons";
+import { Clock } from "./Clock";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -52,8 +53,12 @@ export function Navbar() {
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-500 text-xs font-semibold text-white">
             {initial}
           </span>
-          <span className="hidden text-sm text-slate-400 sm:inline">{user.email}</span>
           <span className="hidden h-5 w-px bg-slate-800 sm:block" />
+           <Clock />                                          {/* <-- NEW */}
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-500 text-xs font-semibold text-white">
+            {initial}
+          </span>
+          <span className="hidden text-sm text-slate-400 sm:inline">{user.email}</span>
           <button
             onClick={handleLogout}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white"
