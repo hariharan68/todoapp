@@ -4,7 +4,7 @@ import { TaskList } from "../components/tasks/TaskList";
 import { useTasks } from "../hooks/useTasks";
 import type { Task } from "../types/task";
 
-type Filter = "all" | "urgent" | "upcoming";
+type Filter = "all" | "today" | "upcoming" | "focus";
 
 function sortByUrgency(tasks: Task[]): Task[] {
   const hasScores = tasks.some((t) => t.ai_priority_score !== null);
@@ -12,6 +12,30 @@ function sortByUrgency(tasks: Task[]): Task[] {
   return [...tasks].sort(
     (a, b) => (b.ai_priority_score ?? -1) - (a.ai_priority_score ?? -1),
   );
+}
+
+// due date falls on today's calendar day (local time)
+function isToday(dateStr: string | null): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
+}
+
+// due date is tomorrow (start of day) or later
+function isUpcoming(dateStr: string | null): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return false;
+  const startOfTomorrow = new Date();
+  startOfTomorrow.setHours(0, 0, 0, 0);
+  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+  return d.getTime() >= startOfTomorrow.getTime();
 }
 
 export function Tasks() {
@@ -24,32 +48,35 @@ export function Tasks() {
     () => ({
       all: tasks.length,
       active: tasks.filter((t) => !t.completed).length,
-      urgent: tasks.filter((t) => !t.completed && t.priority === "high").length,
-      upcoming: tasks.filter(
-        (t) => !t.completed && t.priority !== "high" && t.due_date,
-      ).length,
+      today: tasks.filter((t) => isToday(t.due_date)).length,
+      upcoming: tasks.filter((t) => isUpcoming(t.due_date)).length,
+      focus: tasks.filter((t) => t.is_focus).length,
     }),
     [tasks],
   );
 
   const filteredTasks = useMemo(() => {
-    if (filter === "urgent") {
-      return tasks.filter((t) => !t.completed && t.priority === "high");
+    switch (filter) {
+      case "today":
+        return tasks.filter((t) => isToday(t.due_date));
+      case "upcoming":
+        return tasks.filter((t) => isUpcoming(t.due_date));
+      case "focus":
+        return tasks.filter((t) => t.is_focus);
+      default:
+        return tasks;
     }
-    if (filter === "upcoming") {
-      return tasks.filter((t) => !t.completed && t.priority !== "high" && t.due_date);
-    }
-    return tasks;
   }, [tasks, filter]);
 
   const tabs: { key: Filter; label: string; count: number }[] = [
     { key: "all", label: "All Tasks", count: counts.all },
-    { key: "urgent", label: "Urgent", count: counts.urgent },
+    { key: "today", label: "Today's Task", count: counts.today },
     { key: "upcoming", label: "Upcoming", count: counts.upcoming },
+    { key: "focus", label: "Focus", count: counts.focus },
   ];
 
   return (
-    <div className="mx-auto w-full max-w-screen-2xl px-6 py-8">
+    <div className="mx-auto w-full max-w-6xl px-6 py-8">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-3xl font-bold tracking-tight text-white">Your Tasks</h1>
         <span className="inline-flex items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-400">
@@ -57,7 +84,6 @@ export function Tasks() {
         </span>
       </div>
 
-      {/* Two-column body: manual add form on the left, task list on the right. */}
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
         <aside className="lg:col-span-1">
           <div className="lg:sticky lg:top-8">
@@ -70,7 +96,7 @@ export function Tasks() {
 
         <section className="lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               {tabs.map((tab) => (
                 <button
                   key={tab.key}
@@ -97,6 +123,7 @@ export function Tasks() {
               isLoading={isLoading}
               isError={isError}
               error={error}
+              aiCreatedIds={new Set<string>()}
             />
           </div>
         </section>

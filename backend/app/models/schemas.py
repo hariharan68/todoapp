@@ -46,6 +46,7 @@ class TaskUpdate(BaseModel):
     priority: Optional[Priority] = None
     completed: Optional[bool] = None
     tags: Optional[str] = None
+    is_focus: Optional[bool] = None # <-- NEW
 
 
 class TaskOut(BaseModel):
@@ -62,6 +63,7 @@ class TaskOut(BaseModel):
     tags: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    is_focus: bool = False  # <-- NEW
 
 
 # ---------- Parse ----------

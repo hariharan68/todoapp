@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { Priority, Task } from "../../types/task";
 import { useDeleteTask, useUpdateTask } from "../../hooks/useTasks";
-import { CheckIcon, ClockIcon, PencilIcon, SparklesIcon, TrashIcon } from "../icons";
+import { CheckIcon, ClockIcon, PencilIcon, SparklesIcon, StarIcon, TrashIcon } from "../icons";
 import { DateTimePicker } from "../ui/DateTimePicker";
 
 const priorityBadge: Record<Priority, string> = {
@@ -225,6 +225,20 @@ export function TaskCard({
       </div>
 
       <div className="flex shrink-0 items-center gap-1">
+        <button
+          onClick={() =>
+            updateTask.mutate({
+              id: task.id,
+              data: { is_focus: !task.is_focus },
+            })
+          }
+          aria-label={task.is_focus ? "Remove from Focus" : "Add to Focus"}
+          className={`rounded-md p-1.5 transition hover:bg-slate-800 ${
+            task.is_focus ? "text-amber-400" : "text-slate-500 hover:text-slate-200"
+          }`}
+        >
+          <StarIcon className="h-4 w-4" />
+        </button>
         <button
           onClick={startEdit}
           aria-label="Edit task"

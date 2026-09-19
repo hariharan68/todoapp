@@ -9,6 +9,7 @@ export interface Task {
   priority: Priority;
   ai_priority_score: number | null;
   completed: boolean;
+  is_focus: boolean;
   tags: string | null;
   created_at: string;
   updated_at: string;
@@ -28,6 +29,7 @@ export interface TaskUpdate {
   due_date?: string | null;
   priority?: Priority;
   completed?: boolean;
+  is_focus?: boolean;
   tags?: string | null;
 }
 

@@ -28,6 +28,7 @@ class Task(Base):
     priority: Mapped[str] = mapped_column(String(10), default="medium", nullable=False)
     ai_priority_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
     completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_focus: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     tags: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
