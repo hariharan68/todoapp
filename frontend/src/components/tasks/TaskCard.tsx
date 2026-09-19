@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import type { Priority, Task } from "../../types/task";
 import { useDeleteTask, useUpdateTask } from "../../hooks/useTasks";
 import { CheckIcon, ClockIcon, PencilIcon, SparklesIcon, TrashIcon } from "../icons";
+import { DateTimePicker } from "../ui/DateTimePicker";
 
 const priorityBadge: Record<Priority, string> = {
   low: "bg-emerald-500/10 text-emerald-400",
@@ -116,12 +117,7 @@ export function TaskCard({
           className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         />
         <div className="grid gap-2 sm:grid-cols-3">
-          <input
-            type="datetime-local"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-          />
+          <DateTimePicker value={dueDate} onChange={setDueDate} placeholder="Due date" />
           <select
             value={priority}
             onChange={(e) => setPriority(e.target.value as Priority)}

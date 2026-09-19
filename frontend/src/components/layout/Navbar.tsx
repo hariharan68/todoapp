@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/auth-context";
-import { ChatIcon, ListIcon, LogOutIcon, StarIcon } from "../icons";
+import { ChatIcon, ListIcon, LogOutIcon, SparklesIcon, StarIcon } from "../icons";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -25,7 +25,7 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-10 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
+      <div className="mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-6">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-indigo-500/40 bg-indigo-500/10">
@@ -37,6 +37,10 @@ export function Navbar() {
             <Link to="/tasks" className={linkClass("/tasks")}>
               <ListIcon className="h-4 w-4" />
               Tasks
+            </Link>
+            <Link to="/ai-add" className={linkClass("/ai-add")}>
+              <SparklesIcon className="h-4 w-4" />
+              AI Task
             </Link>
             <Link to="/chat" className={linkClass("/chat")}>
               <ChatIcon className="h-4 w-4" />

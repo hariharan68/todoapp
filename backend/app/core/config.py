@@ -31,10 +31,10 @@ class Settings(BaseSettings):
     def cors_origins(self) -> list[str]:
         return [o.strip() for o in self.FRONTEND_ORIGINS.split(",") if o.strip()]
 
-    @property 
+    @property
     def ai_enabled(self) -> bool:
-        """True only when a non - empty Anthropic API Key is not configured """
-        return bool (self.ANTHROPIC_API_KEY.strip())
+        """True only when a non-empty Anthropic API key is configured."""
+        return bool(self.ANTHROPIC_API_KEY.strip())
 
 
 settings = Settings()

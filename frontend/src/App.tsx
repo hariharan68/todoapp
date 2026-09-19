@@ -5,6 +5,7 @@ import { Chat } from "./pages/Chat";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
 import { Tasks } from "./pages/Tasks";
+import { AiAdd } from "./pages/AiAdd";
 
 export default function App() {
   return (
@@ -19,6 +20,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Tasks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ai-add"
+            element={
+              <ProtectedRoute>
+                <AiAdd />
               </ProtectedRoute>
             }
           />

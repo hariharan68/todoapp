@@ -12,6 +12,12 @@ body {
   @apply bg-slate-950 text-slate-100;
 }
 
+/* Render browser-drawn UI (select dropdowns, scrollbars, any native pickers)
+   in dark mode instead of the default light chrome. */
+:root {
+  color-scheme: dark;
+}
+
 ::selection {
   @apply bg-indigo-500/30 text-white;
 }

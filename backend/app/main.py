@@ -26,6 +26,6 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 @app.get("/config", tags=["config"])
-def config() -> dict[str,bool]:
-    """Public Flag the frontend uses to decide which features to decide which feature to show """
-    return {"ai_enabled": settings.ai_ebnabled}
+def config() -> dict[str, bool]:
+    """Public flag the frontend uses to decide which features to show."""
+    return {"ai_enabled": settings.ai_enabled}
