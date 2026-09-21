@@ -22,8 +22,8 @@
 ### `docker-compose up -d` fails or Postgres never becomes healthy
 
 - Make sure Docker Desktop is actually running.
-- Check for a port conflict on **5433**: `docker-compose ps` or
-  `netstat -ano | findstr 5433` (PowerShell). If something else is bound to 5433,
+- Check for a port conflict on **5434**: `docker-compose ps` or
+  `netstat -ano | findstr 5434` (PowerShell). If something else is bound to 5434,
   either stop it or remap the port in `docker-compose.yml` and update
   `DATABASE_URL` in `backend/.env` to match.
 - `docker-compose logs postgres` shows startup errors directly.
@@ -31,10 +31,40 @@
 ### `alembic upgrade head` fails to connect
 
 - Confirm Postgres is up: `docker-compose ps` should show `Up (healthy)`.
-- Confirm `DATABASE_URL` in `backend/.env` matches the Docker port (5433 by default,
+- Confirm `DATABASE_URL` in `backend/.env` matches the Docker port (5434 by default,
   **not** 5432 unless you changed the compose file too).
 - The default example is
-  `postgresql://postgres:postgres@localhost:5433/todo_db` — copy it exactly if unsure.
+  `postgresql://postgres:postgres@localhost:5434/todo_db` — copy it exactly if unsure.
+
+### `password authentication failed for user "postgres"` on every request
+
+Symptom: the backend starts fine, but any request that touches the database (e.g.
+`POST /auth/login`) returns a `500` with
+`psycopg2.OperationalError: ... FATAL:  password authentication failed for user "postgres"`.
+
+This almost always means you are reaching **a different Postgres** than this project's
+container — most often another local project's container that grabbed the host port
+first. Docker can leave `ai_todo_postgres` reporting `Up (healthy)` while its host port
+binding is silently empty, so `docker-compose ps` alone is not enough.
+
+Check the published port:
+
+```powershell
+docker ps --filter name=ai_todo_postgres --format "{{.Names}}  {{.Status}}  {{.Ports}}"
+```
+
+- Healthy: `0.0.0.0:5434->5432/tcp` — the host port is published.
+- Broken: `5432/tcp` only, with no `->` mapping — the host port went to someone else.
+
+Find who holds the port, then either stop that container or pick a free host port in
+`docker-compose.yml` and `backend/.env`:
+
+```powershell
+docker ps --format "{{.Names}}  {{.Ports}}" | findstr 5434
+docker-compose up -d          # recreate with the corrected mapping
+```
+
+The named volume (`todo_pgdata`) survives a recreate, so no data is lost.
 
 ### `pip install -r requirements.txt` — bcrypt `AttributeError` at startup
 
@@ -59,11 +89,11 @@ then retry activation.
 
 ### Frontend can't reach the backend / CORS errors in the browser console
 
-- Confirm the backend is actually running on port 8000 (`http://localhost:8000/health`
+- Confirm the backend is actually running on port 8005 (`http://localhost:8005/health`
   should return `{"status":"ok"}`).
 - Confirm `frontend/.env`'s `VITE_API_URL` points at the right backend URL.
 - Confirm `backend/.env`'s `FRONTEND_ORIGINS` includes the frontend's actual origin
-  (default covers `http://localhost:5173` and `http://127.0.0.1:5173` — if you're
+  (default covers `http://localhost:5180` and `http://127.0.0.1:5180` — if you're
   accessing the frontend via a different hostname/port, add it here, comma-separated,
   and restart the backend).
 
@@ -98,9 +128,9 @@ simply be up to date next time you visit it — no action needed.
 
 ## Getting more detail
 
-- **Backend logs**: the terminal running `uvicorn app.main:app --reload` prints
+- **Backend logs**: the terminal running `uvicorn app.main:app --reload --port 8005` prints
   request logs and full tracebacks for `500`s.
-- **Swagger UI** (`http://localhost:8000/docs`): the fastest way to test any single
+- **Swagger UI** (`http://localhost:8005/docs`): the fastest way to test any single
   endpoint in isolation, independent of the frontend.
 - **Browser DevTools Network tab**: inspect the exact request/response for any failed
   frontend call — the `ApiError` thrown by `api-client.ts` carries the backend's

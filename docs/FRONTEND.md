@@ -1,7 +1,7 @@
 # Frontend — React + Vite
 
 Location: `frontend/src/`. Entry point: `src/main.tsx`, served by Vite
-(`npm run dev`, port 5173).
+(`npm run dev`, port 5180).
 
 ## Directory layout
 
@@ -79,7 +79,7 @@ finished but there's still no `user` (e.g. token was invalid/expired).
 
 ## API client (`lib/api-client.ts`)
 
-- `API_URL` — from `import.meta.env.VITE_API_URL`, default `http://localhost:8000`.
+- `API_URL` — from `import.meta.env.VITE_API_URL`, default `http://localhost:8005`.
 - `request<T>(path, options)` — shared fetch wrapper:
   - Sets `Content-Type: application/json` and `Authorization: Bearer <token>` (if a
     token exists in `localStorage`).

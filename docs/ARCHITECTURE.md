@@ -7,8 +7,8 @@ Three independent processes, none containerized except Postgres:
 ```
 ┌─────────────────────┐        HTTP (JSON, Bearer JWT)        ┌──────────────────────────┐
 │   Frontend (Vite)    │ ─────────────────────────────────▶  │   Backend (FastAPI)       │
-│   React + TS         │ ◀─────────────────────────────────  │   Uvicorn, port 8000      │
-│   localhost:5173      │                                      │                          │
+│   React + TS         │ ◀─────────────────────────────────  │   Uvicorn, port 8005      │
+│   localhost:5180      │                                      │                          │
 └─────────────────────┘                                      │  ┌────────────────────┐  │
                                                                 │  │  Auth (JWT)        │  │
                                                                 │  ├────────────────────┤  │
@@ -21,7 +21,7 @@ Three independent processes, none containerized except Postgres:
                                                                              ▼
                                                                 ┌──────────────────────────┐
                                                                 │  PostgreSQL 16 (Docker)   │
-                                                                │  localhost:5433            │
+                                                                │  localhost:5434            │
                                                                 └──────────────────────────┘
 ```
 

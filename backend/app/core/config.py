@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     CLAUDE_MODEL: str = "claude-sonnet-4-6"
 
     # CORS — the Vite dev server origin(s) allowed to call this API
-    FRONTEND_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
+    FRONTEND_ORIGINS: str = "http://localhost:5180,http://127.0.0.1:5180"
 
     model_config = SettingsConfigDict(
         env_file=".env",

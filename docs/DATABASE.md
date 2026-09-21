@@ -1,7 +1,7 @@
 # Database
 
 **Engine**: PostgreSQL 16, run via Docker Compose (`docker-compose.yml`), exposed on
-host port **5433** (container internally listens on 5432). Database name `todo_db`,
+host port **5434** (container internally listens on 5432). Database name `todo_db`,
 user/password `postgres`/`postgres`.
 
 **ORM**: SQLAlchemy 2.0 declarative models (`Mapped[...]` / `mapped_column`) under

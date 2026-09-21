@@ -1,7 +1,7 @@
 # Backend — FastAPI
 
 Location: `backend/app/`. Entry point: `app/main.py`, served by Uvicorn
-(`uvicorn app.main:app --reload`).
+(`uvicorn app.main:app --reload --port 8005`).
 
 ## Directory layout
 
@@ -50,7 +50,7 @@ env vars). Fields:
 | `ALGORITHM` | `HS256` | JWT signing algorithm |
 | `ANTHROPIC_API_KEY` | `""` | Claude API key; blank disables AI endpoints |
 | `CLAUDE_MODEL` | `claude-sonnet-4-6` | Model used by all three LangGraph graphs |
-| `FRONTEND_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated CORS allow-list |
+| `FRONTEND_ORIGINS` | `http://localhost:5180,http://127.0.0.1:5180` | Comma-separated CORS allow-list |
 
 The module-level singleton `settings = Settings()` is created once at import time. A
 side effect at the bottom of the file copies `ANTHROPIC_API_KEY` into

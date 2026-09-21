@@ -2,7 +2,7 @@
 
 This is the authoritative, must-follow guide to get the app running locally. Three
 things need to be running at once: **Postgres** (Docker), the **backend** (FastAPI on
-port 8000), and the **frontend** (Vite on port 5173).
+port 8005), and the **frontend** (Vite on port 5180).
 
 Instructions below give both PowerShell (Windows) and bash (macOS/Linux) commands where
 they differ.
@@ -37,8 +37,9 @@ docker-compose up -d
 
 This starts **only** Postgres (`postgres:16`) — nothing else runs in Docker.
 
-- Host port: **5433** (mapped to the container's internal 5432, to avoid clashing with
-  a Postgres already installed natively on 5432)
+- Host port: **5434** (mapped to the container's internal 5432, to avoid clashing with
+  a Postgres already installed natively on 5432, or with other local projects that
+  commonly take 5433)
 - Database: `todo_db`
 - User / password: `postgres` / `postgres`
 - Data persists in a named Docker volume (`pgdata`) across restarts
@@ -49,10 +50,11 @@ Check it's healthy:
 docker-compose ps
 ```
 
-You should see `ai_todo_postgres` as `Up (healthy)`. If port 5432 is free on your
-machine and you'd rather use it, change the port mapping in `docker-compose.yml`
-(`"5433:5432"` → `"5432:5432"`) **and** update `DATABASE_URL` in `backend/.env` to
-match.
+You should see `ai_todo_postgres` as `Up (healthy)`, and the `PORTS` column must show
+`0.0.0.0:5434->5432/tcp`. If it shows only `5432/tcp` with no host mapping, another
+container already holds the host port — see TROUBLESHOOTING.md. If a different host
+port suits you better, change the mapping in `docker-compose.yml` **and** update
+`DATABASE_URL` in `backend/.env` to match.
 
 To stop Postgres later: `docker-compose down` (add `-v` to also delete the data volume).
 
@@ -101,7 +103,7 @@ Then open `backend/.env` and set:
 
 ```env
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/todo_db
+DATABASE_URL=postgresql://postgres:postgres@localhost:5434/todo_db
 SECRET_KEY=change-this-to-something-random-and-long
 ACCESS_TOKEN_EXPIRE_MINUTES=10080
 CLAUDE_MODEL=claude-sonnet-4-6
@@ -110,7 +112,7 @@ CLAUDE_MODEL=claude-sonnet-4-6
 - **`ANTHROPIC_API_KEY`** — paste your real key here to enable AI parsing,
   prioritization, and chat. Leave blank and everything else (auth, manual task CRUD)
   still works; the AI endpoints will fail with a `502`.
-- **`DATABASE_URL`** — must match the Docker Postgres port (5433 by default).
+- **`DATABASE_URL`** — must match the Docker Postgres port (5434 by default).
 - **`SECRET_KEY`** — used to sign JWTs. Change it to a long random string for anything
   beyond local development.
 - **`CLAUDE_MODEL`** — defaults to `claude-sonnet-4-6`; change to any Claude model your
@@ -128,12 +130,12 @@ This runs the initial migration, creating the `users` and `tasks` tables (see
 ### 2.5 Run the API server
 
 ```powershell
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8005
 ```
 
-- API base URL: **http://localhost:8000**
-- Interactive Swagger docs: **http://localhost:8000/docs**
-- Health check: **http://localhost:8000/health** → `{"status": "ok"}`
+- API base URL: **http://localhost:8005**
+- Interactive Swagger docs: **http://localhost:8005/docs**
+- Health check: **http://localhost:8005/health** → `{"status": "ok"}`
 
 Keep this terminal open — `--reload` restarts the server automatically as you edit
 backend code.
@@ -167,10 +169,10 @@ copy .env.example .env
 `frontend/.env` needs only:
 
 ```env
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:8005
 ```
 
-This already matches the backend's default port — change it only if you run the
+This matches the port the backend is started on (`--port 8005`) — change it only if you run the
 backend elsewhere.
 
 ### 3.2 Run the dev server
@@ -179,7 +181,7 @@ backend elsewhere.
 npm run dev
 ```
 
-- Frontend URL: **http://localhost:5173**
+- Frontend URL: **http://localhost:5180**
 
 Keep this terminal open too — Vite hot-reloads on file changes.
 
@@ -189,7 +191,7 @@ Keep this terminal open too — Vite hot-reloads on file changes.
 
 With all three (Postgres, backend, frontend) running:
 
-1. Open **http://localhost:5173** in a browser.
+1. Open **http://localhost:5180** in a browser.
 2. **Sign up** with any email and a password ≥ 6 characters (entered twice — the confirm
    field is checked client-side) → you're redirected to `/tasks`.
 3. Expand **"+ Add task manually"** and add a task (title, optional description/due
@@ -214,7 +216,7 @@ docker-compose up -d
 # Terminal 2 — backend
 cd backend
 .venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8005
 
 # Terminal 3 — frontend
 cd frontend

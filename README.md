@@ -26,14 +26,15 @@ From the repo root:
 docker-compose up -d
 ```
 
-This starts **only** Postgres (image `postgres:16`) on **`localhost:5433`** with database
+This starts **only** Postgres (image `postgres:16`) on **`localhost:5434`** with database
 `todo_db` (user/password `postgres`/`postgres`) and a named volume so data persists.
 Nothing else runs in Docker — the backend and frontend run natively.
 
-> **Port note:** the container is published on host port **5433** (mapped to the
+> **Port note:** the container is published on host port **5434** (mapped to the
 > container's internal 5432) to avoid clashing with any Postgres already installed
-> natively on 5432. `backend/.env.example` already points `DATABASE_URL` at 5433. If
-> port 5432 is free on your machine, you can change both back to 5432.
+> natively on 5432, or with other local projects that commonly take 5433.
+> `backend/.env.example` already points `DATABASE_URL` at 5434. If another port suits
+> your machine better, change it in `docker-compose.yml` and `backend/.env` together.
 
 ---
 
@@ -58,8 +59,8 @@ cp .env.example .env          # Windows: copy .env.example .env
 # create the database tables
 alembic upgrade head
 
-# run the API (http://localhost:8000, docs at /docs)
-uvicorn app.main:app --reload
+# run the API (http://localhost:8005, docs at /docs)
+uvicorn app.main:app --reload --port 8005
 ```
 
 ### Migration commands
@@ -90,9 +91,9 @@ cd frontend
 npm install
 
 cp .env.example .env          # Windows: copy .env.example .env
-# VITE_API_URL defaults to http://localhost:8000
+# VITE_API_URL defaults to http://localhost:8005
 
-npm run dev                   # http://localhost:5173
+npm run dev                   # http://localhost:5180
 ```
 
 ---
