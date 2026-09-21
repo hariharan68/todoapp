@@ -23,8 +23,14 @@ frontend/src/
 │   │   └── form-controls.tsx      # shared FormField / FormError / SubmitButton / AuthSwitch
 │   ├── tasks/
 │   │   ├── TaskForm.tsx           # AI quick-add + collapsible manual form
-│   │   ├── TaskList.tsx           # presentational list
+│   │   ├── TaskToolbar.tsx        # search + sort + hide-done + active tag chip
+│   │   ├── BulkActionBar.tsx      # appears when a selection exists
+│   │   ├── TaskList.tsx           # presentational list (skeletons, 2 empty states)
 │   │   └── TaskCard.tsx           # card + inline edit mode
+│   ├── ui/
+│   │   ├── DateTimePicker.tsx
+│   │   ├── ConfirmDialog.tsx      # outside-click + Escape, role="alertdialog"
+│   │   └── Toast.tsx              # viewport; provider lives in lib/toast-context
 │   ├── chat/
 │   │   └── ChatWindow.tsx
 │   └── layout/
@@ -35,6 +41,9 @@ frontend/src/
 │   └── useTasks.ts                # TanStack Query hooks
 ├── lib/
 │   ├── api-client.ts              # fetch wrapper + typed backend calls
+│   ├── task-filters.ts            # pure filter/search/sort helpers (unit-tested)
+│   ├── task-filters.test.ts       # vitest
+│   ├── toast-context.tsx          # ToastProvider / useToast
 │   └── auth-context.tsx           # AuthProvider / useAuth
 └── types/
     └── task.ts                    # shared TS types (mirror of backend schemas)

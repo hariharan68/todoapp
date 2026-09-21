@@ -45,3 +45,11 @@ export interface AuthUser {
   id: string;
   email: string;
 }
+
+export type BulkTaskAction = "complete" | "uncomplete" | "delete";
+
+export interface BulkTaskResult {
+  /** Rows the server actually touched. Ids the caller doesn't own are skipped,
+   *  so this can legitimately be lower than the number of ids sent. */
+  affected: number;
+}

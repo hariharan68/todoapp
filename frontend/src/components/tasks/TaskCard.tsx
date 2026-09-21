@@ -3,6 +3,13 @@ import type { Priority, Task } from "../../types/task";
 import { useDeleteTask, useUpdateTask } from "../../hooks/useTasks";
 import { CheckIcon, ClockIcon, PencilIcon, SparklesIcon, StarIcon, TrashIcon } from "../icons";
 import { DateTimePicker } from "../ui/DateTimePicker";
+import { isOverdue, tagList } from "../../lib/task-filters";
+import { ConfirmDialog } from "../ui/ConfirmDialog";
+import { useToast } from "../../lib/toast-context";
+
+function errorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error && err.message ? err.message : fallback;
+}
 
 const priorityBadge: Record<Priority, string> = {
   low: "bg-emerald-500/10 text-emerald-400",
@@ -43,24 +50,25 @@ function toDatetimeLocal(due: string | null): string {
   )}:${pad(d.getMinutes())}`;
 }
 
-function tagList(tags: string | null): string[] {
-  if (!tags) return [];
-  return tags
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
-}
-
 export function TaskCard({
   task,
   isAiExtracted = false,
+  onTagClick,
+  selected = false,
+  onSelectChange,
 }: {
   task: Task;
   isAiExtracted?: boolean;
+  onTagClick?: (tag: string) => void;
+  selected?: boolean;
+  /** Omitted on pages without bulk selection, which hides the checkbox entirely. */
+  onSelectChange?: (id: string, selected: boolean) => void;
 }) {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? "");
@@ -69,6 +77,7 @@ export function TaskCard({
   const [tags, setTags] = useState(task.tags ?? "");
 
   const due = formatDue(task.due_date);
+  const overdue = isOverdue(task);
 
   const startEdit = () => {
     setTitle(task.title);
@@ -83,17 +92,56 @@ export function TaskCard({
     e.preventDefault();
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
-    await updateTask.mutateAsync({
-      id: task.id,
-      data: {
-        title: trimmedTitle,
-        description: description.trim() || null,
-        due_date: dueDate ? new Date(dueDate).toISOString() : null,
-        priority,
-        tags: tags.trim() || null,
+    try {
+      await updateTask.mutateAsync({
+        id: task.id,
+        data: {
+          title: trimmedTitle,
+          description: description.trim() || null,
+          due_date: dueDate ? new Date(dueDate).toISOString() : null,
+          priority,
+          tags: tags.trim() || null,
+        },
+      });
+      setEditing(false);
+    } catch (err) {
+      toast({ message: errorMessage(err, "Couldn't save the task."), tone: "error" });
+    }
+  };
+
+  const toggleCompleted = () => {
+    const nextCompleted = !task.completed;
+    updateTask.mutate(
+      { id: task.id, data: { completed: nextCompleted } },
+      {
+        onSuccess: () =>
+          toast({
+            message: nextCompleted ? "Task completed." : "Task reopened.",
+            actionLabel: "Undo",
+            onAction: () =>
+              updateTask.mutate({
+                id: task.id,
+                data: { completed: !nextCompleted },
+              }),
+          }),
+        onError: (err) =>
+          toast({
+            message: errorMessage(err, "Couldn't update the task."),
+            tone: "error",
+          }),
       },
+    );
+  };
+
+  const confirmDelete = () => {
+    setConfirming(false);
+    deleteTask.mutate(task.id, {
+      onError: (err) =>
+        toast({
+          message: errorMessage(err, "Couldn't delete the task."),
+          tone: "error",
+        }),
     });
-    setEditing(false);
   };
 
   if (editing) {
@@ -156,12 +204,27 @@ export function TaskCard({
   }
 
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-900/60 p-4 transition hover:border-slate-700">
+    <div
+      className={`flex items-start gap-3 rounded-xl border bg-slate-900/60 p-4 transition ${
+        selected
+          ? "border-indigo-500/50"
+          : "border-slate-800 hover:border-slate-700"
+      }`}
+    >
+      {/* Recedes until hovered or checked so it never competes with the
+          completion toggle beside it. */}
+      {onSelectChange && (
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onSelectChange(task.id, e.target.checked)}
+          aria-label={`Select ${task.title}`}
+          className="mt-1 h-3.5 w-3.5 shrink-0 cursor-pointer rounded-sm accent-indigo-500 opacity-30 transition-opacity hover:opacity-100 checked:opacity-100"
+        />
+      )}
       <button
         type="button"
-        onClick={() =>
-          updateTask.mutate({ id: task.id, data: { completed: !task.completed } })
-        }
+        onClick={toggleCompleted}
         aria-label={task.completed ? "Mark incomplete" : "Mark complete"}
         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
           task.completed
@@ -191,14 +254,26 @@ export function TaskCard({
             <span className={`h-1.5 w-1.5 rounded-full ${priorityDot[task.priority]}`} />
             {priorityLabel[task.priority]}
           </span>
-          {tagList(task.tags).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-400"
-            >
-              #{tag}
-            </span>
-          ))}
+          {tagList(task.tags).map((tag) =>
+            onTagClick ? (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => onTagClick(tag)}
+                aria-label={`Filter by ${tag}`}
+                className="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-400 transition hover:bg-slate-700 hover:text-slate-200"
+              >
+                #{tag}
+              </button>
+            ) : (
+              <span
+                key={tag}
+                className="rounded-full bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-400"
+              >
+                #{tag}
+              </span>
+            ),
+          )}
         </div>
 
         {task.description && (
@@ -207,8 +282,11 @@ export function TaskCard({
 
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
           {due && (
-            <span className="flex items-center gap-1">
+            <span
+              className={`flex items-center gap-1 ${overdue ? "text-rose-400" : ""}`}
+            >
               <ClockIcon className="h-3 w-3" /> {due}
+              {overdue && " · overdue"}
             </span>
           )}
           {task.ai_priority_score !== null && (
@@ -227,10 +305,16 @@ export function TaskCard({
       <div className="flex shrink-0 items-center gap-1">
         <button
           onClick={() =>
-            updateTask.mutate({
-              id: task.id,
-              data: { is_focus: !task.is_focus },
-            })
+            updateTask.mutate(
+              { id: task.id, data: { is_focus: !task.is_focus } },
+              {
+                onError: (err) =>
+                  toast({
+                    message: errorMessage(err, "Couldn't update Focus."),
+                    tone: "error",
+                  }),
+              },
+            )
           }
           aria-label={task.is_focus ? "Remove from Focus" : "Add to Focus"}
           className={`rounded-md p-1.5 transition hover:bg-slate-800 ${
@@ -247,13 +331,22 @@ export function TaskCard({
           <PencilIcon className="h-4 w-4" />
         </button>
         <button
-          onClick={() => deleteTask.mutate(task.id)}
+          onClick={() => setConfirming(true)}
           aria-label="Delete task"
           className="rounded-md p-1.5 text-slate-500 hover:bg-rose-500/10 hover:text-rose-400"
         >
           <TrashIcon className="h-4 w-4" />
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirming}
+        title="Delete this task?"
+        body={`"${task.title}" will be permanently removed. This can't be undone.`}
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirming(false)}
+      />
     </div>
   );
 }

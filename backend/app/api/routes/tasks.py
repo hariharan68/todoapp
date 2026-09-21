@@ -2,11 +2,17 @@ import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.deps import get_current_user
-from app.models.schemas import TaskCreate, TaskOut, TaskUpdate
+from app.models.schemas import (
+    BulkTaskIn,
+    BulkTaskOut,
+    TaskCreate,
+    TaskOut,
+    TaskUpdate,
+)
 from app.models.task import Task
 from app.models.user import User
 
@@ -48,6 +54,36 @@ def create_task(
     db.commit()
     db.refresh(task)
     return task
+
+
+@router.post("/bulk", response_model=BulkTaskOut)
+def bulk_update_tasks(
+    payload: BulkTaskIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> BulkTaskOut:
+    """Complete, reopen, or delete many of the caller's tasks in one statement.
+
+    Declared above the /{task_id} routes so "bulk" is never parsed as a task id.
+    Ownership is enforced by the user_id predicate rather than a per-id 404, so
+    another user's ids are silently skipped instead of being confirmed to exist.
+    """
+    owned = (Task.user_id == current_user.id, Task.id.in_(payload.ids))
+
+    if payload.action == "delete":
+        stmt = delete(Task).where(*owned)
+    else:
+        # A Core UPDATE bypasses the ORM, so updated_at's onupdate=func.now()
+        # never fires — set it explicitly or the rows keep a stale timestamp.
+        stmt = (
+            update(Task)
+            .where(*owned)
+            .values(completed=payload.action == "complete", updated_at=func.now())
+        )
+
+    result = db.execute(stmt.execution_options(synchronize_session=False))
+    db.commit()
+    return BulkTaskOut(affected=result.rowcount)
 
 
 @router.get("/{task_id}", response_model=TaskOut)

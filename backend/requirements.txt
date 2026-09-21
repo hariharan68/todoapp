@@ -16,3 +16,7 @@ python-multipart
 langgraph
 langchain-anthropic
 langchain-core
+
+# Tests
+pytest
+httpx

@@ -205,6 +205,36 @@ With all three (Postgres, backend, frontend) running:
 
 ---
 
+## Running the tests
+
+### Backend (pytest)
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+pytest
+```
+
+Requires the Docker Postgres to be running. The suite creates and drops its own
+`todo_test` database on the same container, so your `todo_db` data is never touched.
+
+The test database is built by running **`alembic upgrade head`**, deliberately not
+`Base.metadata.create_all()`. `create_all()` reads the ORM models, so it would happily
+create a column that no migration produces — and the suite would pass green while
+production returned 500s. `tests/test_schema_drift.py` then diffs the migrated schema
+against the models and fails on any divergence.
+
+### Frontend (vitest)
+
+```powershell
+cd frontend
+npm test
+```
+
+Covers the pure filter/search/sort helpers in `src/lib/task-filters.ts`.
+
+`npm run build` runs `tsc` in strict mode and is the other gate — keep it clean.
+
 ## Daily start / stop (after first-time setup)
 
 Once you've done the setup above once, subsequent runs are just:

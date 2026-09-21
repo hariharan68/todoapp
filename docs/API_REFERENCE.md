@@ -94,6 +94,12 @@ List the current user's tasks, newest first (`created_at desc`).
 - `completed` (optional `bool`) — filter to only completed (`true`) or only open
   (`false`) tasks. Omit for all.
 
+This is the only server-side filter. Search, tag/priority/overdue filtering and sorting
+are all done client-side in `frontend/src/lib/task-filters.ts` — the whole list is
+already in the cache, so filtering there is instant and costs no round-trip. Revisit if
+a user ever passes ~500 tasks, at which point pagination and server-side filtering should
+land together.
+
 **Response `200`** — `TaskOut[]` (see shape below).
 
 ### `POST /tasks/`
@@ -134,6 +140,32 @@ Partial update — only fields present in the body are changed (`exclude_unset`)
 **Response `200`** — the updated `TaskOut`.
 **Errors** — `404` if not found/not owned.
 
+### `POST /tasks/bulk`
+
+Complete, reopen, or delete many of the caller's tasks in one statement.
+
+Declared **above** the `/{task_id}` routes so `bulk` is never parsed as a task id.
+
+**Request**
+```json
+{ "ids": ["uuid", "uuid"], "action": "complete" }
+```
+- `ids`: 1–500 task UUIDs.
+- `action`: one of `"complete" | "uncomplete" | "delete"`.
+
+**Response `200`**
+```json
+{ "affected": 2 }
+```
+
+Ownership is enforced by the `user_id` predicate rather than a per-id lookup, so ids
+belonging to another user (or ids that don't exist) are **silently skipped** and simply
+aren't counted — `affected` can legitimately be lower than `len(ids)`. There is
+deliberately no per-id `404`, which would otherwise let a caller probe for the existence
+of other users' task ids.
+
+**Errors** — `422` if `ids` is empty, longer than 500, or `action` isn't one of the three.
+
 ### `DELETE /tasks/{task_id}`
 
 **Response `204`** — no body.
@@ -151,6 +183,7 @@ Partial update — only fields present in the body are changed (`exclude_unset`)
   "priority": "low | medium | high",
   "ai_priority_score": "integer 0-100 | null",
   "completed": "boolean",
+  "is_focus": "boolean",
   "tags": "string | null",
   "created_at": "ISO 8601 datetime",
   "updated_at": "ISO 8601 datetime"

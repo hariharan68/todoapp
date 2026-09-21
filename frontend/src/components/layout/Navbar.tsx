@@ -50,11 +50,8 @@ export function Navbar() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-500 text-xs font-semibold text-white">
-            {initial}
-          </span>
+          <Clock />
           <span className="hidden h-5 w-px bg-slate-800 sm:block" />
-           <Clock />                                          {/* <-- NEW */}
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-blue-500 text-xs font-semibold text-white">
             {initial}
           </span>

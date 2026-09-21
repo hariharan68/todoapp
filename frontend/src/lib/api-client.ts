@@ -1,5 +1,7 @@
 import type {
   AuthUser,
+  BulkTaskAction,
+  BulkTaskResult,
   ParsedTask,
   Task,
   TaskCreate,
@@ -121,6 +123,12 @@ export const apiClient = {
 
   deleteTask: (id: string) =>
     request<void>(`/tasks/${id}`, { method: "DELETE" }),
+
+  bulkTasks: (ids: string[], action: BulkTaskAction) =>
+    request<BulkTaskResult>("/tasks/bulk", {
+      method: "POST",
+      body: JSON.stringify({ ids, action }),
+    }),
 
   // ----- AI -----
   parseText: (text: string) =>

@@ -34,6 +34,7 @@ at the DB level as a backstop).
 | `priority` | `VARCHAR(10)` | not null, default `"medium"` (app-level `Literal["low","medium","high"]`; **not** a DB-level CHECK/enum constraint) |
 | `ai_priority_score` | `INTEGER` | nullable, 0–100, set by `POST /prioritize/` |
 | `completed` | `BOOLEAN` | not null, default `false` |
+| `is_focus` | `BOOLEAN` | not null, server default `false` — the Focus tab's star |
 | `tags` | `VARCHAR(500)` | nullable, free-form comma-separated string (not a separate table/array) |
 | `created_at` | `TIMESTAMPTZ` | not null, server default `now()` |
 | `updated_at` | `TIMESTAMPTZ` | not null, server default `now()`, auto-updated via `onupdate=func.now()` on any ORM-level update |
@@ -62,6 +63,7 @@ users (1) ──< (many) tasks
 | Revision | File | Description |
 |---|---|---|
 | `0001_initial` | `alembic/versions/0001_initial.py` | Creates `users` and `tasks` with all columns/indexes/FK described above. `down_revision = None` — this is the root migration. |
+| `0002_focus` | `alembic/versions/0002_add_is_focus.py` | Adds `tasks.is_focus` (`BOOLEAN NOT NULL DEFAULT false`). Current head. |
 
 ### Common commands
 
@@ -80,6 +82,21 @@ alembic upgrade head
 
 Run all `alembic` commands from `backend/` with the virtualenv activated (see
 [RUNNING.md](./RUNNING.md)).
+
+### Migration gotchas learned the hard way
+
+- A revision file **must live in `alembic/versions/`**. `alembic.ini` sets only
+  `script_location = alembic`, so Alembic scans `<script_location>/versions` and nothing
+  else. A migration placed directly in `alembic/` is silently ignored — `alembic upgrade
+  head` reports success while the column never gets created, and every query touching it
+  then fails with `UndefinedColumn`. Do **not** "fix" this by adding
+  `version_locations = alembic`; that would make Alembic try to load `env.py` as a
+  revision.
+- `upgrade()` and `downgrade()` must both be at **module level**. An indented
+  `downgrade()` nested inside `upgrade()` parses fine and silently does nothing.
+- Always test the round trip: `alembic downgrade -1 && alembic upgrade head`.
+- `backend/tests/test_schema_drift.py` now fails the build on any model/migration
+  divergence, which is what catches all three of the above automatically.
 
 ### Notes / gotchas
 

@@ -66,6 +66,20 @@ class TaskOut(BaseModel):
     is_focus: bool = False  # <-- NEW
 
 
+BulkTaskAction = Literal["complete", "uncomplete", "delete"]
+
+
+class BulkTaskIn(BaseModel):
+    ids: list[UUID] = Field(min_length=1, max_length=500)
+    action: BulkTaskAction
+
+
+class BulkTaskOut(BaseModel):
+    # Ids that aren't the caller's simply don't match, so this can be lower
+    # than len(ids) without that being an error.
+    affected: int
+
+
 # ---------- Parse ----------
 class ParseIn(BaseModel):
     text: str = Field(min_length=1)
