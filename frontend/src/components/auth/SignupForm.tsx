@@ -18,8 +18,8 @@ export function SignupForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
     if (password !== confirmPassword) {
@@ -56,7 +56,7 @@ export function SignupForm() {
           value={password}
           onChange={setPassword}
           placeholder="••••••••"
-          hint="At least 6 characters."
+          hint="At least 8 characters."
           autoComplete="new-password"
         />
         <FormField
@@ -76,7 +76,7 @@ export function SignupForm() {
           loadingLabel="Creating account…"
         />
       </form>
-      <AuthSwitch prompt="Already registered?" href="/login" cta="Log in instead" />
+      <AuthSwitch prompt="Already registered?" href="/login" cta="Log in" />
     </>
   );
 }

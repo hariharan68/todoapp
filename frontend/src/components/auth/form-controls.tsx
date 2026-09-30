@@ -12,6 +12,7 @@ export function FormField({
   hint,
   error,
   autoComplete,
+  deferAutofill = false,
 }: {
   id: string;
   label: string;
@@ -22,8 +23,17 @@ export function FormField({
   hint?: string;
   error?: string;
   autoComplete?: string;
+  /** Stop the browser filling this field on page load. */
+  deferAutofill?: boolean;
 }) {
   const [reveal, setReveal] = useState(false);
+  // Browsers won't autofill a read-only input, so the field starts locked and
+  // unlocks the moment the user reaches for it. Saved credentials are then
+  // offered in the browser's dropdown instead of being silently filled in --
+  // a silent fill also never reaches React's onChange, so the box showed a
+  // password while the form state held an empty one.
+  const [locked, setLocked] = useState(deferAutofill);
+  const unlock = () => setLocked(false);
   const isPassword = type === "password";
 
   return (
@@ -44,6 +54,11 @@ export function FormField({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           autoComplete={autoComplete}
+          readOnly={locked}
+          // pointerdown fires before focus, so on touch devices the field is
+          // already editable when it gains focus and the keyboard opens.
+          onPointerDown={locked ? unlock : undefined}
+          onFocus={locked ? unlock : undefined}
           aria-invalid={error ? true : undefined}
           aria-describedby={error || hint ? `${id}-desc` : undefined}
           className={`w-full rounded-lg border bg-slate-950 py-2.5 pl-3.5 text-sm text-white placeholder-slate-600 outline-none transition duration-150 focus:ring-2 ${

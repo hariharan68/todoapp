@@ -102,6 +102,9 @@ export const apiClient = {
 
   getMe: () => request<AuthUser>("/auth/me"),
 
+  // Revokes every token issued to this user, on all devices.
+  logout: () => request<void>("/auth/logout", { method: "POST" }),
+
   // ----- Tasks -----
   listTasks: (completed?: boolean) => {
     const q =

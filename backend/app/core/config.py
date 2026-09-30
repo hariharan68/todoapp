@@ -34,8 +34,11 @@ class Settings(BaseSettings):
 
     # Auth / JWT
     SECRET_KEY: str = INSECURE_SECRET_KEY
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
-    ALGORITHM: str = "HS256"
+    # 7 days by default; capped at 30 days. POST /auth/logout revokes early.
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=10080, ge=5, le=43200)
+    # HMAC only. A free-form string would accept "none" or an RSA algorithm
+    # name with a shared secret, both of which break signature checking.
+    ALGORITHM: Literal["HS256", "HS384", "HS512"] = "HS256"
 
     # AI
     ANTHROPIC_API_KEY: str = ""

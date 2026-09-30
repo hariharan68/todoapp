@@ -57,7 +57,7 @@ TODO/
 │   │   │   ├── chat_graph.py         # ReAct chat agent
 │   │   │   └── tools.py              # tools available to the chat agent
 │   │   └── api/routes/
-│   │       ├── auth.py         # /auth/signup, /auth/login, /auth/me
+│   │       ├── auth.py         # /auth/signup, /auth/login, /auth/logout, /auth/me
 │   │       ├── tasks.py        # /tasks CRUD
 │   │       ├── parse.py        # /parse, /parse/preview
 │   │       ├── prioritize.py   # /prioritize

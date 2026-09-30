@@ -83,6 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(() => {
+    // Revoke server-side first so a copied token stops working too. Fire and
+    // forget: local sign-out must not wait on, or fail with, the network.
+    apiClient.logout().catch(() => {});
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);

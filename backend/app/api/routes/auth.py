@@ -26,18 +26,35 @@ def signup(payload: SignupIn, db: Session = Depends(get_db)) -> Token:
     db.add(user)
     db.commit()
     db.refresh(user)
-    return Token(access_token=create_access_token(str(user.id)))
+    return Token(access_token=create_access_token(str(user.id), user.token_version))
 
 
 @router.post("/login", response_model=Token)
 def login(payload: LoginIn, db: Session = Depends(get_db)) -> Token:
     user = db.scalar(select(User).where(User.email == payload.email))
-    if user is None or not verify_password(payload.password, user.hashed_password):
+    # verify_password runs bcrypt even when the user is None, so an unknown
+    # email takes as long to reject as a wrong password.
+    hashed = user.hashed_password if user is not None else None
+    if not verify_password(payload.password, hashed) or user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password.",
         )
-    return Token(access_token=create_access_token(str(user.id)))
+    return Token(access_token=create_access_token(str(user.id), user.token_version))
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> None:
+    """Revoke every token issued to the caller, on all devices.
+
+    Tokens are stateless, so revocation works by bumping token_version: every
+    token carrying the old value then fails get_current_user.
+    """
+    current_user.token_version += 1
+    db.commit()
 
 
 @router.get("/me", response_model=UserOut)

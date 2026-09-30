@@ -192,7 +192,7 @@ Keep this terminal open too — Vite hot-reloads on file changes.
 With all three (Postgres, backend, frontend) running:
 
 1. Open **http://localhost:5180** in a browser.
-2. **Sign up** with any email and a password ≥ 6 characters (entered twice — the confirm
+2. **Sign up** with any email and a password ≥ 8 characters (entered twice — the confirm
    field is checked client-side) → you're redirected to `/tasks`.
 3. Expand **"+ Add task manually"** and add a task (title, optional description/due
    date/priority/tags) — no AI key needed for this.

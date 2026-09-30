@@ -5,7 +5,14 @@ from app.agents.parser_graph import parse_task_text
 from app.core.errors import upstream_error
 from app.db.database import get_db
 from app.deps import get_current_user, require_ai   # <-- CHANGED: added require_ai
-from app.models.schemas import ParsedTask, ParseIn, TaskOut
+from app.models.schemas import (
+    DESCRIPTION_MAX,
+    TAGS_MAX,
+    TITLE_MAX,
+    ParsedTask,
+    ParseIn,
+    TaskOut,
+)
 from app.models.task import Task
 from app.models.user import User
 
@@ -45,13 +52,15 @@ def parse_and_create(
 ) -> Task:
     """Parse free text and persist the resulting task for the current user."""
     parsed = _run_parser(payload.text)
+    # Model output is not bound by the request schema's limits; clamp it to the
+    # column widths so an over-long answer can't fail the insert.
     task = Task(
         user_id=current_user.id,
-        title=parsed.title,
-        description=parsed.description,
+        title=(parsed.title or "Untitled task")[:TITLE_MAX],
+        description=parsed.description[:DESCRIPTION_MAX] if parsed.description else None,
         due_date=parsed.due_date,
         priority=parsed.priority,
-        tags=parsed.tags,
+        tags=parsed.tags[:TAGS_MAX] if parsed.tags else None,
     )
     db.add(task)
     db.commit()

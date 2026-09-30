@@ -13,6 +13,7 @@ from langchain_core.tools import tool
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.schemas import DESCRIPTION_MAX, TAGS_MAX, TITLE_MAX
 from app.models.task import Task
 
 
@@ -56,13 +57,15 @@ def make_tools(db: Session, user_id: uuid.UUID):
         """
         if priority not in ("low", "medium", "high"):
             priority = "medium"
+        # Arguments come from the model, so clamp them to the column widths
+        # rather than let an over-long value fail the insert.
         task = Task(
             user_id=user_id,
-            title=title,
-            description=description,
+            title=(title or "Untitled task")[:TITLE_MAX],
+            description=description[:DESCRIPTION_MAX] if description else None,
             due_date=_parse_due_date(due_date),
             priority=priority,
-            tags=tags,
+            tags=tags[:TAGS_MAX] if tags else None,
         )
         db.add(task)
         db.commit()
