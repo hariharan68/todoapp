@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.agents.parser_graph import parse_task_text
+from app.core.errors import upstream_error
 from app.db.database import get_db
 from app.deps import get_current_user, require_ai   # <-- CHANGED: added require_ai
 from app.models.schemas import ParsedTask, ParseIn, TaskOut
@@ -15,10 +16,7 @@ def _run_parser(text: str) -> ParsedTask:
     try:
         return parse_task_text(text)
     except Exception as exc:  # surface AI/config errors as a clean 502
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to parse task text: {exc}",
-        )
+        raise upstream_error(exc, operation="Task text parsing") from exc
 
 
 @router.post(

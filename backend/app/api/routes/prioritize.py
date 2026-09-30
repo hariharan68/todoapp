@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.agents.prioritizer_graph import prioritize_tasks
+from app.core.errors import upstream_error
 from app.db.database import get_db
 from app.deps import get_current_user, require_ai   # <-- CHANGED: added require_ai
 from app.models.schemas import TaskOut
@@ -46,10 +47,7 @@ def prioritize(
     try:
         scores = prioritize_tasks(payload)
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to prioritize tasks: {exc}",
-        )
+        raise upstream_error(exc, operation="Task prioritization") from exc
 
     for task in tasks:
         score = scores.get(str(task.id))

@@ -7,6 +7,16 @@ A full-stack personal todo app with AI features built on **LangGraph**:
   task parsing, AI prioritization, and a conversational tool-using agent
 - **Frontend** — React (Vite + TypeScript) + Tailwind CSS + TanStack Query + React Router
 
+> **Deploying to a server?** This page covers local development, where the backend
+> and frontend run natively on your machine. For production, see
+> **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** — the whole stack runs in
+> containers there, and the quick version is:
+>
+> ```bash
+> cp .env.production.example .env   # then fill in SECRET_KEY and POSTGRES_PASSWORD
+> docker compose -f docker-compose.prod.yml up -d --build
+> ```
+
 ---
 
 ## Prerequisites
@@ -50,7 +60,7 @@ python -m venv .venv
 # macOS/Linux:
 # source .venv/bin/activate
 
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 
 # configure environment
 cp .env.example .env          # Windows: copy .env.example .env
@@ -129,10 +139,12 @@ Each AI feature is a **compiled LangGraph graph**, not a one-off API call:
   factory that binds every tool to the current DB session and user id — so the agent can
   never touch another user's tasks.
 
-**Conversation memory is held server-side.** The chat graph uses a `MemorySaver`
-checkpointer keyed by `thread_id = user_id`. LangGraph stores the running conversation
-itself, so the frontend sends **only the newest message** on each `/chat/` call — never
-the full history.
+**Conversation memory is held server-side.** The chat graph uses a LangGraph
+checkpointer keyed by `thread_id = user_id`, so the frontend sends **only the newest
+message** on each `/chat/` call — never the full history. Which checkpointer is used
+is configuration (`CHAT_CHECKPOINTER`, see `app/agents/checkpointer.py`): in-process
+`MemorySaver` locally, `PostgresSaver` in production so the history survives restarts
+and every uvicorn worker sees the same conversation.
 
 The Anthropic model is read from `CLAUDE_MODEL` (default `claude-sonnet-4-6`) and the key
 from `ANTHROPIC_API_KEY`, both wired through `app/core/config.py`. Pasting a real key into
@@ -145,8 +157,27 @@ from `ANTHROPIC_API_KEY`, both wired through `app/core/config.py`. Pasting a rea
 - **No email verification or password reset.**
 - **Single long-lived access token** — no refresh-token rotation; the token lives for
   `ACCESS_TOKEN_EXPIRE_MINUTES` (default 7 days).
-- **`MemorySaver` is in-process** — chat history resets if the backend restarts. A
-  persistent checkpointer such as **`PostgresSaver`** (from `langgraph-checkpoint-postgres`)
-  is a drop-in upgrade: swap the `MemorySaver()` in `chat_graph.py` for a `PostgresSaver`
-  pointed at the same Postgres instance.
+- **Chat history is in-process during local development** — it resets when the
+  backend restarts. Production uses `PostgresSaver` instead, so history survives
+  restarts and is consistent across workers; `CHAT_CHECKPOINTER` picks between them
+  and defaults to `auto` (postgres in production, memory in development).
 - Passwords are hashed with bcrypt and never stored or logged in plaintext.
+
+### Dependency advisories
+
+`npm audit` reports four advisories in the frontend tree. None of them affect the
+deployed app, and each fix is a semver-major upgrade, so they are deliberately not
+applied:
+
+- **vite / esbuild (1 high, 1 moderate)** — all of these are *dev-server*
+  vulnerabilities. Vite is a build-time tool here; production serves static files
+  from nginx and never runs the dev server. They do apply to `npm run dev` on your
+  own machine. Fixing needs vite 5 -> 8.
+- **react-router (moderate)** — an open redirect through attacker-controlled
+  navigation targets, plus an SSR-hydration issue. Every `<Link to=...>` and
+  `navigate(...)` in this app passes a hard-coded literal, and the app does no SSR,
+  so neither is reachable. Fixing needs react-router 6 -> 7.
+
+Re-check with `npm audit` before each upgrade; treat the reasoning above as valid
+only while those two conditions (no dev server in production, no dynamic navigation
+targets) still hold.

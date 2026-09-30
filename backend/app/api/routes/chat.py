@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.agents.chat_graph import run_chat
+from app.core.errors import upstream_error
 from app.db.database import get_db
 from app.deps import get_current_user, require_ai   # <-- CHANGED: added require_ai
 from app.models.schemas import ChatIn, ChatOut
@@ -28,8 +29,5 @@ def chat(
     try:
         reply = run_chat(payload.message, str(current_user.id), db)
     except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Chat agent failed: {exc}",
-        )
+        raise upstream_error(exc, operation="Chat agent") from exc
     return ChatOut(reply=reply)

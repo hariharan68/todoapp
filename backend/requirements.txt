@@ -1,22 +1,40 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-psycopg2-binary
-alembic
-pydantic
-pydantic-settings
-email-validator
-python-dotenv
-passlib[bcrypt]
+# Runtime dependencies, pinned to the versions this app is known to work with.
+# Unpinned requirements mean the image you build next month is not the image you
+# tested today. Bump these deliberately, then re-run the test suite.
+#
+# Test-only dependencies live in requirements-dev.txt so they stay out of the
+# production image.
+
+# --- Web framework ---
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+python-multipart==0.0.32
+
+# --- Database ---
+sqlalchemy==2.0.52
+psycopg2-binary==2.9.12
+alembic==1.19.2
+# psycopg 3 is required by langgraph-checkpoint-postgres (below); the app's own
+# ORM traffic still goes through psycopg2.
+psycopg[binary,pool]==3.3.6
+
+# --- Config / validation ---
+pydantic==2.13.5
+pydantic-settings==2.15.0
+email-validator==2.3.0
+python-dotenv==1.2.3
+
+# --- Auth ---
+passlib[bcrypt]==1.7.4
 # Pin bcrypt below 4.1 — passlib 1.7.4 reads bcrypt.__about__.__version__,
 # which was removed in bcrypt 4.1+, causing a noisy AttributeError at startup.
-bcrypt<4.1
-python-jose[cryptography]
-python-multipart
-langgraph
-langchain-anthropic
-langchain-core
+bcrypt==4.0.1
+python-jose[cryptography]==3.5.0
 
-# Tests
-pytest
-httpx
+# --- AI (LangGraph + Claude) ---
+langgraph==1.2.11
+langchain-anthropic==1.7.1
+langchain-core==1.6.2
+# Shared conversation memory, so chat history survives restarts and is
+# consistent across uvicorn workers.
+langgraph-checkpoint-postgres==3.1.2

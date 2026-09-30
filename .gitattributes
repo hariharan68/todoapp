@@ -1,0 +1,31 @@
+# Line endings are a deployment concern here, not a style preference.
+#
+# This repo is developed on Windows and deployed to Linux containers. A shell
+# script committed with CRLF fails inside the image with a misleading
+# "no such file or directory" — the kernel reads the shebang as "/bin/sh\r",
+# which does not exist. Forcing LF on everything that runs in a container
+# removes that failure mode for good.
+
+* text=auto eol=lf
+
+# Files that must be LF no matter what the developer's git config says.
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+*.Dockerfile    text eol=lf
+.dockerignore   text eol=lf
+*.conf          text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.py            text eol=lf
+*.ts            text eol=lf
+*.tsx           text eol=lf
+*.json          text eol=lf
+
+# Binary: never translate, never diff as text.
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.woff   binary
+*.woff2  binary
