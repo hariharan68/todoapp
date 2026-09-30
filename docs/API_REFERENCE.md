@@ -67,7 +67,15 @@ Create a new account and receive a token.
 **Response `200`** — same `Token` shape as signup.
 
 **Errors**
-- `401` — `{ "detail": "Incorrect email or password." }`
+- `401` — `{ "detail": "Incorrect email or password." }` — identical for an unknown email
+  and a wrong password, and takes the same time, so it doesn't reveal which emails exist.
+
+### `POST /auth/logout`
+
+Auth required. Revokes **every** token issued to the caller (all devices) by bumping
+their `token_version`.
+
+**Response `204`** — no body. Any request with a previously issued token then gets `401`.
 
 ### `GET /auth/me`
 

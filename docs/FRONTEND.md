@@ -167,8 +167,8 @@ Controlled forms holding their own field/error/submitting state and calling
 
 Signup collects **email, password, and confirm password**. Confirm-password is a purely
 client-side concern — it is never sent to the backend, whose `SignupIn` schema takes only
-email and password. Validation order: password length (≥ 6 chars, mirroring the backend's
-`Field(min_length=6, max_length=128)`), then the confirmation match. The mismatch is also
+email and password. Validation order: password length (≥ 8 chars, mirroring the backend's
+`Field(min_length=8, max_length=128)`, which also caps it at bcrypt's 72 bytes), then the confirmation match. The mismatch is also
 shown live under the confirm field as soon as the user types in it, and the form-level
 error is suppressed while that inline error is visible so the same message never appears
 twice.

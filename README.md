@@ -85,7 +85,7 @@ changes: edit the models, then `alembic revision --autogenerate -m "message"` an
 ### Endpoints
 
 - `GET  /health`
-- `POST /auth/signup`, `POST /auth/login`, `GET /auth/me`
+- `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`
 - `GET/POST /tasks/`, `GET/PATCH/DELETE /tasks/{id}` (all user-scoped)
 - `POST /parse/` (parse NL → create task), `POST /parse/preview` (parse only)
 - `POST /prioritize/` (score the user's incomplete tasks)
@@ -156,7 +156,8 @@ from `ANTHROPIC_API_KEY`, both wired through `app/core/config.py`. Pasting a rea
 
 - **No email verification or password reset.**
 - **Single long-lived access token** — no refresh-token rotation; the token lives for
-  `ACCESS_TOKEN_EXPIRE_MINUTES` (default 7 days).
+  `ACCESS_TOKEN_EXPIRE_MINUTES` (default 7 days). Logging out calls `POST /auth/logout`,
+  which revokes every token the user holds, on all devices.
 - **Chat history is in-process during local development** — it resets when the
   backend restarts. Production uses `PostgresSaver` instead, so history survives
   restarts and is consistent across workers; `CHAT_CHECKPOINTER` picks between them

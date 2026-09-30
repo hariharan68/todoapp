@@ -58,7 +58,10 @@ if settings.cors_origins:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
-        allow_credentials=True,
+        # Auth is a bearer header, never a cookie, so credentialed cross-origin
+        # requests are never needed; allowing them only widens what a
+        # misconfigured origin list could expose.
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["X-Request-ID"],

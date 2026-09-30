@@ -22,16 +22,17 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    user_id = decode_access_token(token)
-    if user_id is None:
+    claims = decode_access_token(token)
+    if claims is None:
         raise _credentials_exception
     try:
-        user_uuid = uuid.UUID(str(user_id))
+        user_uuid = uuid.UUID(claims.user_id)
     except (ValueError, TypeError):
         raise _credentials_exception
 
     user = db.get(User, user_uuid)
-    if user is None:
+    # A token issued before the user's last logout carries an old version.
+    if user is None or user.token_version != claims.token_version:
         raise _credentials_exception
     return user
 

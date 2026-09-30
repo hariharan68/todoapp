@@ -5,8 +5,10 @@
 - **No email verification or password reset.** Signup is immediate; there's no way to
   recover a forgotten password short of direct DB access.
 - **Single long-lived access token, no refresh rotation.** A token issued at login/
-  signup is valid for `ACCESS_TOKEN_EXPIRE_MINUTES` (default 7 days) with no way to
-  revoke it server-side before then. Logging out only clears the token client-side.
+  signup is valid for `ACCESS_TOKEN_EXPIRE_MINUTES` (default 7 days). Logging out calls
+  `POST /auth/logout`, which bumps the user's `token_version` and so revokes every token
+  they hold, on all devices. Deploying migration `0003` signs every user out once,
+  because tokens issued before it carry no version.
 - **Chat memory is in-process (`MemorySaver`).** Conversation history for the chat
   agent lives in backend process memory, keyed by user id. It is lost whenever the
   backend restarts — the next message from that user starts a fresh conversation even
