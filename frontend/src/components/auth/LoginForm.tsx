@@ -36,6 +36,7 @@ export function LoginForm() {
           onChange={setEmail}
           placeholder="you@example.com"
           autoComplete="email"
+          deferAutofill
         />
         <FormField
           id="password"
@@ -45,6 +46,7 @@ export function LoginForm() {
           onChange={setPassword}
           placeholder="••••••••"
           autoComplete="current-password"
+          deferAutofill
         />
         {error && <FormError message={error} />}
         <SubmitButton loading={submitting} label="Log in" loadingLabel="Logging in…" />

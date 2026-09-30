@@ -76,7 +76,7 @@ export function SignupForm() {
           loadingLabel="Creating account…"
         />
       </form>
-      <AuthSwitch prompt="Already registered?" href="/login" cta="Log in instead" />
+      <AuthSwitch prompt="Already registered?" href="/login" cta="Log in" />
     </>
   );
 }
